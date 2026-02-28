@@ -16,6 +16,7 @@ export type VideoAd = {
     video_url: string
     description: string | null
     status: VideoAdStatus
+    play_time_minutes: number
     created_at: string
     updated_at: string
 }

@@ -102,6 +102,9 @@ export default async function AdsListPage() {
                                                 Status
                                             </th>
                                             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                Play Time
+                                            </th>
+                                            <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                                 Created
                                             </th>
                                             <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
@@ -132,6 +135,11 @@ export default async function AdsListPage() {
                                                     <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${statusColors[ad.status]}`}>
                                                         {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
                                                     </span>
+                                                </td>
+                                                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                    <div className="font-medium text-gray-900">
+                                                        {ad.play_time_minutes || 0} min
+                                                    </div>
                                                 </td>
                                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                     <div className="flex items-center gap-1.5">

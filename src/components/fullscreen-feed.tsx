@@ -53,28 +53,73 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
             const player = playersRef.current[index]
             if (player && typeof player.pauseVideo === 'function' && typeof player.playVideo === 'function') {
                 if (index === currentVisualIndex) {
-                    player.playVideo()
+                    // Rewind to start, then play
+                    if (typeof player.seekTo === 'function') {
+                        player.seekTo(0);
+                    }
+                    player.playVideo();
                 } else {
-                    player.pauseVideo()
+                    player.pauseVideo();
                 }
             }
         })
     }, [currentVisualIndex])
 
+    // Keep a ref of the current visible index for the interval timer to avoid stale closures
+    const activeIndexRef = useRef(currentVisualIndex);
+    useEffect(() => {
+        activeIndexRef.current = currentVisualIndex;
+    }, [currentVisualIndex]);
+
+    // Manage play time tracking (polls every 60s)
+    useEffect(() => {
+        // Function to record a minute of watch time
+        const recordWatchTime = async () => {
+            const activeIdx = activeIndexRef.current;
+            const adId = ads[activeIdx]?.id;
+
+            if (!adId) return;
+
+            try {
+                // Ensure the player is actually playing (state 1 is playing in YT API)
+                const player = playersRef.current[activeIdx];
+                if (player && typeof player.getPlayerState === 'function') {
+                    const state = player.getPlayerState();
+                    if (state === 1) { // 1 = playing
+                        // Dynamic import supabase client to avoid SSR issues if this runs in a strange context
+                        const { createClient } = await import('@/utils/supabase/client');
+                        const supabase = createClient();
+                        await supabase.rpc('increment_play_time', { ad_id: adId });
+                        console.log(`Recorded 1 min for ${adId}`);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to record watch time", error);
+            }
+        };
+
+        const intervalId = setInterval(recordWatchTime, 60000); // 60 seconds
+
+        return () => clearInterval(intervalId);
+    }, [ads]);
+
     const scrollToNextVideo = () => {
         if (!containerRef.current) return;
         const nextIndex = currentVisualIndex + 1;
 
-        if (nextIndex < ads.length) {
-            // Wait for a small amount of time to make the transition smoother
-            setTimeout(() => {
-                const container = containerRef.current;
-                if (!container) return;
+        // Wait for a small amount of time to make the transition smoother
+        setTimeout(() => {
+            const container = containerRef.current;
+            if (!container) return;
 
+            if (nextIndex < ads.length) {
                 // Use scrollBy to smoothly snap to the next video
                 container.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
-            }, 500);
-        }
+            } else {
+                // Loop back to the first video
+                container.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }, 500);
     }
 
     if (ads.length === 0) {

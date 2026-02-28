@@ -50,24 +50,24 @@ export default async function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-6">
-                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                <Link href="/dashboard/admin/users" className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow group cursor-pointer">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
                         <Users className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">Total Users</p>
+                        <p className="text-sm font-medium text-gray-500 truncate group-hover:text-blue-600 transition-colors">Total Users</p>
                         <p className="mt-1 text-2xl font-semibold text-gray-900">{totalUsers || 0}</p>
                     </div>
-                </div>
-                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4">
-                    <div className="p-3 bg-green-50 text-green-600 rounded-lg">
+                </Link>
+                <Link href="/dashboard/ads" className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow group cursor-pointer">
+                    <div className="p-3 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
                         <PlaySquare className="h-6 w-6" />
                     </div>
                     <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">Total Campaigns</p>
+                        <p className="text-sm font-medium text-gray-500 truncate group-hover:text-green-600 transition-colors">Total Campaigns</p>
                         <p className="mt-1 text-2xl font-semibold text-gray-900">{totalCampaigns || 0}</p>
                     </div>
-                </div>
+                </Link>
                 <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4">
                     <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
                         <Settings className="h-6 w-6" />
