@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 }
 import { Building2, Plus, ArrowLeft } from 'lucide-react'
 import { createCompany } from './actions'
+import { SubmitButton } from '@/components/submit-button'
 
 export default async function CompaniesPage() {
     const supabase = await createClient()
@@ -46,9 +47,9 @@ export default async function CompaniesPage() {
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
                         <input type="text" id="name" name="name" required className="w-full flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50" placeholder="e.g. Acme Corp" />
                     </div>
-                    <button type="submit" className="bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2">
+                    <SubmitButton pendingText="Creating..." className="bg-blue-600 text-white hover:bg-blue-700 h-10 px-4 py-2 rounded-md font-medium text-sm flex items-center gap-2">
                         <Plus className="h-4 w-4" /> Create
-                    </button>
+                    </SubmitButton>
                 </form>
             </div>
 
