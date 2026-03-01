@@ -20,7 +20,19 @@ export async function updateCampaign(formData: FormData) {
         redirect(`/dashboard/ads/${id}/edit?error=ID and Title are required`)
     }
 
-    const { error } = await supabase
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+    let updateClient = supabase
+    if (profile?.is_admin) {
+        const { createAdminClient } = await import('@/utils/supabase/server')
+        updateClient = await createAdminClient()
+    }
+
+    const { error } = await updateClient
         .from('campaigns')
         .update({
             title,
@@ -28,7 +40,6 @@ export async function updateCampaign(formData: FormData) {
             status: status as 'draft' | 'active' | 'paused' | 'archived',
         })
         .eq('id', id)
-        .eq('user_id', user.id) // Ensure they only update their own campaign
 
     if (error) {
         console.error('Error updating campaign:', error)

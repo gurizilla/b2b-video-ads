@@ -17,11 +17,28 @@ export default async function EditAdPage(props: { params: Promise<{ id: string }
         redirect('/login')
     }
 
-    const { data: campaign, error } = await supabase
+    let campaignQuery = supabase
         .from('campaigns')
         .select('*')
         .eq('id', params.id)
-        .eq('user_id', user.id)
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+    // If admin, we must use the service role to fetch if it's outside their company
+    let fetchClient = supabase
+    if (profile?.is_admin) {
+        const { createAdminClient } = await import('@/utils/supabase/server')
+        fetchClient = await createAdminClient()
+    }
+
+    const { data: campaign, error } = await fetchClient
+        .from('campaigns')
+        .select('*')
+        .eq('id', params.id)
         .single()
 
     if (error || !campaign) {

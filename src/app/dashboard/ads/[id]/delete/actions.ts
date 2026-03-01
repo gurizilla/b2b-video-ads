@@ -17,11 +17,22 @@ export async function deleteCampaign(formData: FormData) {
         redirect('/dashboard/ads?error=Campaign ID is required')
     }
 
-    const { error } = await supabase
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', user.id)
+        .single()
+
+    let deleteClient = supabase
+    if (profile?.is_admin) {
+        const { createAdminClient } = await import('@/utils/supabase/server')
+        deleteClient = await createAdminClient()
+    }
+
+    const { error } = await deleteClient
         .from('campaigns')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.id) // Extra safety check
 
     if (error) {
         console.error('Error deleting campaign:', error)
