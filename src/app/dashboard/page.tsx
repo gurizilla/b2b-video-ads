@@ -1,4 +1,4 @@
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import {
     PlaySquare,
@@ -49,21 +49,49 @@ export default async function DashboardRoot() {
     let allAds: any[] | null = null
 
     if (profile?.is_admin) {
-        const { count: usersCount } = await supabase
+        const adminClient = await createAdminClient()
+
+        const { count: usersCount, error: usersError } = await adminClient
             .from('profiles')
             .select('*', { count: 'exact', head: true })
+
+        console.log('--- ADMIN USERS COUNT FETCH ---', { usersCount, usersError })
         totalUsers = usersCount || 0
 
-        const { count: campaignsCount } = await supabase
-            .from('video_ads')
+        const { count: campaignsCount } = await adminClient
+            .from('campaigns')
             .select('*', { count: 'exact', head: true })
         totalCampaigns = campaignsCount || 0
 
-        const { data } = await supabase
-            .from('video_ads')
-            .select(`*, profiles(email)`)
+        const { data: campaignsData, error } = await adminClient
+            .from('campaigns')
+            .select(`
+                *, 
+                companies(name)
+            `)
             .order('created_at', { ascending: false })
-        allAds = data
+
+        console.log('--- ADMIN CAMPAIGNS FE FETCH ---', { campaignsData, error })
+
+        if (campaignsData) {
+            // Get unique user IDs to fetch emails
+            const userIds = [...new Set((campaignsData || []).map(c => c.user_id))]
+
+            const { data: profilesData } = await supabase
+                .from('profiles')
+                .select('id, email')
+                .in('id', userIds)
+
+            // Map emails back into the campaign objects to match expected UI structure
+            allAds = campaignsData.map(campaign => ({
+                ...campaign,
+                profiles: {
+                    email: (profilesData || []).find(p => p.id === campaign.user_id)?.email || 'Unknown'
+                }
+            }))
+        } else {
+            allAds = []
+        }
     }
 
     return (
@@ -82,29 +110,29 @@ export default async function DashboardRoot() {
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4">
-                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-                        <PlaySquare className="h-6 w-6" />
+                <div className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5">
+                    <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                        <PlaySquare className="h-6 w-6" strokeWidth={1.5} />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">
+                    <div className="flex flex-col">
+                        <p className="text-sm font-medium text-gray-500 mb-1">
                             Active Campaigns
                         </p>
-                        <p className="mt-1 text-2xl font-semibold text-gray-900">
+                        <p className="text-2xl font-bold text-gray-900 leading-none">
                             {activeCampaignsCount}
                         </p>
                     </div>
                 </div>
 
-                <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4">
-                    <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                        <Clock className="h-6 w-6" />
+                <div className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5">
+                    <div className="p-3.5 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                        <Clock className="h-6 w-6" strokeWidth={1.5} />
                     </div>
-                    <div>
-                        <p className="text-sm font-medium text-gray-500 truncate">
+                    <div className="flex flex-col">
+                        <p className="text-sm font-medium text-gray-500 mb-1">
                             Total Display Time
                         </p>
-                        <p className="mt-1 text-2xl font-semibold text-gray-900">
+                        <p className="text-2xl font-bold text-gray-900 leading-none">
                             {totalPlayTime} min
                         </p>
                     </div>
@@ -129,45 +157,45 @@ export default async function DashboardRoot() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-6">
                         <Link
                             href="/dashboard/admin/users"
-                            className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow group cursor-pointer"
+                            className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5 hover:shadow-md transition-shadow group cursor-pointer"
                         >
-                            <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
-                                <Users className="h-6 w-6" />
+                            <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                                <Users className="h-6 w-6" strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-500 truncate group-hover:text-blue-600 transition-colors">
+                            <div className="flex flex-col">
+                                <p className="text-sm font-medium text-gray-500 mb-1 group-hover:text-blue-600 transition-colors">
                                     Total Users
                                 </p>
-                                <p className="mt-1 text-2xl font-semibold text-gray-900">
+                                <p className="text-2xl font-bold text-gray-900 leading-none">
                                     {totalUsers}
                                 </p>
                             </div>
                         </Link>
                         <Link
                             href="/dashboard/ads"
-                            className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4 hover:shadow-md transition-shadow group cursor-pointer"
+                            className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5 hover:shadow-md transition-shadow group cursor-pointer"
                         >
-                            <div className="p-3 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-100 transition-colors">
-                                <PlaySquare className="h-6 w-6" />
+                            <div className="p-3.5 bg-green-50 text-green-600 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                                <PlaySquare className="h-6 w-6" strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-500 truncate group-hover:text-green-600 transition-colors">
+                            <div className="flex flex-col">
+                                <p className="text-sm font-medium text-gray-500 mb-1 group-hover:text-green-600 transition-colors">
                                     Total Campaigns
                                 </p>
-                                <p className="mt-1 text-2xl font-semibold text-gray-900">
+                                <p className="text-2xl font-bold text-gray-900 leading-none">
                                     {totalCampaigns}
                                 </p>
                             </div>
                         </Link>
-                        <div className="bg-white overflow-hidden shadow rounded-lg border border-gray-100 p-5 flex items-center gap-4">
-                            <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
-                                <Settings className="h-6 w-6" />
+                        <div className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5">
+                            <div className="p-3.5 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
+                                <Settings className="h-6 w-6" strokeWidth={1.5} />
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-gray-500 truncate">
+                            <div className="flex flex-col">
+                                <p className="text-sm font-medium text-gray-500 mb-1">
                                     System Status
                                 </p>
-                                <p className="mt-1 text-2xl font-semibold text-gray-900">
+                                <p className="text-2xl font-bold text-gray-900 leading-none">
                                     Online
                                 </p>
                             </div>
@@ -225,6 +253,9 @@ export default async function DashboardRoot() {
                                             Campaign
                                         </th>
                                         <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                            Company
+                                        </th>
+                                        <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                             Owner
                                         </th>
                                         <th className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -239,6 +270,11 @@ export default async function DashboardRoot() {
                                                 {ad.title}
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                                                    {ad.companies?.name || 'Unassigned'}
+                                                </span>
+                                            </td>
+                                            <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                 {ad.profiles?.email || 'Unknown'}
                                             </td>
                                             <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
@@ -248,7 +284,7 @@ export default async function DashboardRoot() {
                                                         : 'bg-gray-100 text-gray-800'
                                                         }`}
                                                 >
-                                                    {ad.status}
+                                                    {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
                                                 </span>
                                             </td>
                                         </tr>
@@ -256,7 +292,7 @@ export default async function DashboardRoot() {
                                     {(!allAds || allAds.length === 0) && (
                                         <tr>
                                             <td
-                                                colSpan={3}
+                                                colSpan={4}
                                                 className="py-8 text-center text-sm text-gray-500"
                                             >
                                                 No campaigns found in the system.

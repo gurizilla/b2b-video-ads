@@ -20,10 +20,17 @@ export async function createVideoAd(campaignId: string, formData: FormData) {
         redirect(`/dashboard/ads/${campaignId}/add?error=Title and Video URL are required`)
     }
 
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single()
+
     const { error } = await supabase
         .from('video_ads')
         .insert({
             user_id: user.id,
+            company_id: profile?.company_id || null,
             campaign_id: campaignId,
             title,
             video_url,

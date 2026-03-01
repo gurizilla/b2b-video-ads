@@ -8,8 +8,15 @@ import { Label } from '@/components/ui/label'
 import { ArrowLeft, Video, Link2 } from 'lucide-react'
 import { use } from 'react'
 
-export default function AddVideoPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AddVideoPage({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ id: string }>
+    searchParams: Promise<{ error?: string }>
+}) {
     const { id } = use(params)
+    const { error } = use(searchParams)
 
     // Bind the campaign ID to the server action
     const addVideoWithCampaignId = createVideoAd.bind(null, id)
@@ -29,6 +36,19 @@ export default function AddVideoPage({ params }: { params: Promise<{ id: string 
                     <p className="text-sm text-gray-500">Add a new YouTube video link to this campaign.</p>
                 </div>
             </div>
+
+            {error && (
+                <div className="mb-6 rounded-md bg-red-50 p-4">
+                    <div className="flex">
+                        <div className="ml-3">
+                            <h3 className="text-sm font-medium text-red-800">Error adding video</h3>
+                            <div className="mt-2 text-sm text-red-700">
+                                <p>{error}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
                 <form action={addVideoWithCampaignId} className="px-4 py-6 sm:p-8">
