@@ -3,8 +3,18 @@ import { createClient } from '@/utils/supabase/server'
 import { FullScreenFeed } from '@/components/fullscreen-feed'
 import { notFound } from 'next/navigation'
 
-export const metadata: Metadata = {
-    title: 'Public | Campaign Feed',
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+    const { id } = await params
+    const supabase = await createClient()
+    const { data: campaign } = await supabase
+        .from('campaigns')
+        .select('title')
+        .eq('id', id)
+        .single()
+
+    return {
+        title: campaign?.title ? `AdManager | Play | ${campaign.title}` : 'AdManager | Play',
+    }
 }
 
 async function getCampaignAds(campaignId: string) {

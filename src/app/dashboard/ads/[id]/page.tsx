@@ -1,5 +1,6 @@
+
 import type { Metadata } from 'next'
-import { createClient } from '@/utils/supabase/server'
+import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
@@ -10,26 +11,58 @@ import { PlaySquare, ArrowLeft, Plus, ExternalLink, Calendar, Trash2 } from 'luc
 import { Campaign, VideoAd } from '@/types/database'
 import { DeleteVideoAdButton } from './delete-video-button'
 
-export default async function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
+// Helper to extract YouTube video ID from various URL formats
+const getYouTubeId = (url: string) => {
+    try {
+        const urlObj = new URL(url)
+        if (urlObj.hostname === 'youtu.be') {
+            return urlObj.pathname.slice(1)
+        }
+        if (urlObj.hostname.includes('youtube.com')) {
+            if (urlObj.pathname.startsWith('/shorts/')) {
+                return urlObj.pathname.split('/')[2] || ''
+            }
+            return urlObj.searchParams.get('v') || ''
+        }
+    } catch { return '' }
+    return ''
+}
+
+export default async function CampaignVideosPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) redirect('/login')
 
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin, company_id')
+        .eq('id', user.id)
+        .single()
+
+    const dbQueryClient = profile?.is_admin ? await createAdminClient() : supabase
+
     // Fetch campaign
-    const { data: campaign, error: campaignError } = await supabase
+    const { data: campaign, error: campaignError } = await dbQueryClient
         .from('campaigns')
         .select('*')
         .eq('id', id)
         .single()
 
+    console.log('[DEBUG] Campaign Fetch Data:', {
+        id,
+        profileId: profile?.company_id,
+        campaignHasData: !!campaign,
+        campaignError
+    })
+
     if (campaignError || !campaign) {
-        redirect('/dashboard/ads')
+        return redirect('/dashboard')
     }
 
     // Fetch video ads for this campaign
-    const { data: videoAds, error: adsError } = await supabase
+    const { data: videoAds, error: adsError } = await dbQueryClient
         .from('video_ads')
         .select('*')
         .eq('campaign_id', id)
@@ -77,47 +110,58 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                     <div className="mt-4 border-t border-gray-100 pt-6">
                         {videoAds && videoAds.length > 0 ? (
                             <ul role="list" className="divide-y divide-gray-100 border border-gray-200 rounded-md overflow-hidden">
-                                {videoAds.map((ad) => (
-                                    <li key={ad.id} className="flex items-center justify-between gap-x-6 py-5 px-4 hover:bg-gray-50 transition-colors">
-                                        <div className="flex min-w-0 gap-x-4">
-                                            <div className="h-12 w-12 flex-none rounded-md bg-gray-100 flex items-center justify-center">
-                                                <PlaySquare className="h-6 w-6 text-blue-600" aria-hidden="true" />
-                                            </div>
-                                            <div className="min-w-0 flex-auto">
-                                                <p className="text-sm font-semibold leading-6 text-gray-900">
-                                                    {ad.title}
-                                                </p>
-                                                <div className="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
-                                                    <a href={ad.video_url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 flex items-center gap-1">
-                                                        {new URL(ad.video_url).hostname}
-                                                        <ExternalLink className="h-3 w-3" />
-                                                    </a>
-                                                    <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
-                                                        <circle cx={1} cy={1} r={1} />
-                                                    </svg>
-                                                    <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset ${ad.status === 'active' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-50 text-gray-600 ring-gray-500/10'
-                                                        }`}>
-                                                        {ad.status}
-                                                    </span>
-                                                    <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
-                                                        <circle cx={1} cy={1} r={1} />
-                                                    </svg>
-                                                    <span className="flex items-center gap-1">
-                                                        <Calendar className="h-3 w-3" />
-                                                        {new Date(ad.created_at).toLocaleDateString()}
-                                                    </span>
+                                {videoAds.map((ad) => {
+                                    const ytId = getYouTubeId(ad.video_url)
+                                    return (
+                                        <li key={ad.id} className="flex items-center justify-between gap-x-6 py-5 px-4 hover:bg-gray-50 transition-colors">
+                                            <div className="flex min-w-0 gap-x-4">
+                                                <div className="h-12 w-16 sm:h-14 sm:w-20 flex-none rounded-md bg-gray-100 flex items-center justify-center overflow-hidden border border-gray-200">
+                                                    {ytId ? (
+                                                        <img
+                                                            src={`https://img.youtube.com/vi/${ytId}/hqdefault.jpg`}
+                                                            alt={`Thumbnail for ${ad.title}`}
+                                                            className="h-full w-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <PlaySquare className="h-6 w-6 text-gray-400" aria-hidden="true" />
+                                                    )}
+                                                </div>
+                                                <div className="min-w-0 flex-auto">
+                                                    <p className="text-sm font-semibold leading-6 text-gray-900">
+                                                        {ad.title}
+                                                    </p>
+                                                    <div className="mt-1 flex items-center gap-x-2 text-xs leading-5 text-gray-500">
+                                                        <a href={ad.video_url} target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 flex items-center gap-1">
+                                                            {new URL(ad.video_url).hostname}
+                                                            <ExternalLink className="h-3 w-3" />
+                                                        </a>
+                                                        <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
+                                                            <circle cx={1} cy={1} r={1} />
+                                                        </svg>
+                                                        <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-xs font-medium ring-1 ring-inset ${ad.status === 'active' ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-gray-50 text-gray-600 ring-gray-500/10'
+                                                            }`}>
+                                                            {ad.status}
+                                                        </span>
+                                                        <svg viewBox="0 0 2 2" className="h-0.5 w-0.5 fill-current">
+                                                            <circle cx={1} cy={1} r={1} />
+                                                        </svg>
+                                                        <span className="flex items-center gap-1">
+                                                            <Calendar className="h-3 w-3" />
+                                                            {new Date(ad.created_at).toLocaleDateString()}
+                                                        </span>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div className="flex flex-none items-center gap-x-4">
-                                            <div className="hidden sm:flex sm:flex-col sm:items-end mr-4">
-                                                <p className="text-sm leading-6 text-gray-900">{ad.play_time_minutes} minutes</p>
-                                                <p className="mt-1 text-xs leading-5 text-gray-500">Play Time</p>
+                                            <div className="flex flex-none items-center gap-x-4">
+                                                <div className="hidden sm:flex sm:flex-col sm:items-end mr-4">
+                                                    <p className="text-sm leading-6 text-gray-900">{ad.play_time_minutes} minutes</p>
+                                                    <p className="mt-1 text-xs leading-5 text-gray-500">Play Time</p>
+                                                </div>
+                                                <DeleteVideoAdButton adId={ad.id} campaignId={campaign.id} />
                                             </div>
-                                            <DeleteVideoAdButton adId={ad.id} campaignId={campaign.id} />
-                                        </div>
-                                    </li>
-                                ))}
+                                        </li>
+                                    )
+                                })}
                             </ul>
                         ) : (
                             <div className="text-center rounded-lg border-2 border-dashed border-gray-300 p-12">
@@ -136,8 +180,8 @@ export default async function CampaignDetailPage({ params }: { params: Promise<{
                             </div>
                         )}
                     </div>
-                </div>
-            </div>
-        </div>
+                </div >
+            </div >
+        </div >
     )
 }

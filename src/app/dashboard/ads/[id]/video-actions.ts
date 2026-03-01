@@ -24,15 +24,21 @@ export async function deleteVideoAd(adId: string, campaignId: string) {
         deleteClient = await createAdminClient()
     }
 
-    const { error } = await deleteClient
+    const { data, error } = await deleteClient
         .from('video_ads')
         .delete()
         .eq('id', adId)
         .eq('campaign_id', campaignId)
+        .select('id')
 
     if (error) {
+        require('fs').writeFileSync('/tmp/delete-video-error.log', JSON.stringify({ error, adId, campaignId }))
         console.error('Error deleting video ad:', error)
         throw new Error('Failed to delete video ad')
+    }
+
+    if (!data || data.length === 0) {
+        require('fs').writeFileSync('/tmp/delete-video-empty.log', JSON.stringify({ message: "0 rows deleted (RLS issue?)", adId, campaignId, isAdmin: profile?.is_admin }))
     }
 
     revalidatePath(`/dashboard/ads/${campaignId}`)

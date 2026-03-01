@@ -29,14 +29,19 @@ export async function deleteCampaign(formData: FormData) {
         deleteClient = await createAdminClient()
     }
 
-    const { error } = await deleteClient
+    const { data: deletedData, error } = await deleteClient
         .from('campaigns')
         .delete()
         .eq('id', id)
+        .select('id')
 
     if (error) {
         console.error('Error deleting campaign:', error)
         redirect('/dashboard/ads?error=Could not delete campaign')
+    }
+
+    if (!deletedData || deletedData.length === 0) {
+        redirect('/dashboard/ads?error=Permission denied: You cannot delete this campaign.')
     }
 
     redirect('/dashboard/ads')
