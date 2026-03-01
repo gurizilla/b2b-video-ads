@@ -1,5 +1,9 @@
+import type { Metadata } from 'next'
 import { deleteCampaign } from './actions'
 
+export const metadata: Metadata = {
+    title: 'Campaigns | Delete',
+}
 export default async function DeleteAdPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ error?: string }> }) {
     const params = await props.params;
     const searchParams = await props.searchParams;

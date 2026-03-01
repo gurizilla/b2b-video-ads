@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+    title: 'Campaigns | Details',
+}
 import { PlaySquare, ArrowLeft, Plus, ExternalLink, Calendar, Trash2 } from 'lucide-react'
 import { Campaign, VideoAd } from '@/types/database'
 import { DeleteVideoAdButton } from './delete-video-button'

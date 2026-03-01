@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+    title: 'Admin | Users',
+}
 import { Users, ArrowLeft, Building2 } from 'lucide-react'
 import { CompanySelector } from '@/components/company-selector'
 

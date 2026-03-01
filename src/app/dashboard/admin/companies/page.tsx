@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+    title: 'Admin | Companies',
+}
 import { Building2, Plus, ArrowLeft } from 'lucide-react'
 import { createCompany } from './actions'
 

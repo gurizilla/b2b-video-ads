@@ -1,5 +1,10 @@
+import type { Metadata } from 'next'
 import { createClient, createAdminClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
+
+export const metadata: Metadata = {
+    title: 'Dashboard | Overview',
+}
 import {
     PlaySquare,
     Clock,

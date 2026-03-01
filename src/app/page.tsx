@@ -1,5 +1,10 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import { FullScreenFeed } from '@/components/fullscreen-feed'
+
+export const metadata: Metadata = {
+  title: 'Public | Home',
+}
 
 async function getActiveAds() {
   const supabase = await createClient()

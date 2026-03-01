@@ -1,6 +1,11 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import { Database } from '@/types/database'
 import Link from 'next/link'
+
+export const metadata: Metadata = {
+    title: 'Campaigns | List',
+}
 import { Video, PlusSquare, Calendar, PlaySquare, Edit, Trash2 } from 'lucide-react'
 
 type CampaignWithCompany = Database['public']['Tables']['campaigns']['Row'] & {

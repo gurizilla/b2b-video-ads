@@ -42,7 +42,7 @@ export default async function DashboardLayout({
                             <div className="flex-shrink-0 flex items-center">
                                 <Link href="/dashboard/ads" className="flex items-center gap-2 font-bold text-xl text-blue-600">
                                     <Video className="h-6 w-6" />
-                                    <span>AdManager Pro</span>
+                                    <span>AdManager</span>
                                 </Link>
                             </div>
                             <NavLinks isAdmin={!!profile?.is_admin} />

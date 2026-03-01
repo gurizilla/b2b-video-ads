@@ -1,5 +1,10 @@
+import type { Metadata } from 'next'
 import { createClient } from '@/utils/supabase/server'
 import { redirect, notFound } from 'next/navigation'
+
+export const metadata: Metadata = {
+    title: 'Campaigns | Edit',
+}
 import { updateCampaign } from './actions'
 import { SubmitButton } from '@/components/submit-button'
 import { Input } from '@/components/ui/input'
