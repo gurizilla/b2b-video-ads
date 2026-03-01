@@ -29,7 +29,7 @@ export function MobileNav({ email, isAdmin }: { email: string, isAdmin: boolean 
             {/* Mobile menu, show/hide based on menu state. */}
             {isOpen && (
                 <div className="absolute top-16 left-0 w-full bg-white shadow-lg border-b border-gray-200 z-50 text-left pb-3" id="mobile-menu">
-                    <NavLinks isAdmin={isAdmin} mobile />
+                    <NavLinks isAdmin={isAdmin} mobile onLinkClick={() => setIsOpen(false)} />
                     <div className="pt-4 pb-3 border-t border-gray-200">
                         <div className="flex items-center px-4">
                             <div className="flex-shrink-0">

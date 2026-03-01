@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-export function NavLinks({ isAdmin, mobile }: { isAdmin: boolean, mobile?: boolean }) {
+export function NavLinks({ isAdmin, mobile, onLinkClick }: { isAdmin: boolean, mobile?: boolean, onLinkClick?: () => void }) {
     const pathname = usePathname()
 
     // Check which route is currently active
@@ -16,6 +16,7 @@ export function NavLinks({ isAdmin, mobile }: { isAdmin: boolean, mobile?: boole
             <div className="pt-2 pb-3 space-y-1">
                 <Link
                     href="/dashboard"
+                    onClick={onLinkClick}
                     className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isDashboardActive
                         ? 'border-blue-500 text-blue-700 bg-blue-50'
                         : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
@@ -25,6 +26,7 @@ export function NavLinks({ isAdmin, mobile }: { isAdmin: boolean, mobile?: boole
                 </Link>
                 <Link
                     href="/dashboard/ads"
+                    onClick={onLinkClick}
                     className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isAdsActive
                         ? 'border-blue-500 text-blue-700 bg-blue-50'
                         : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
@@ -35,6 +37,7 @@ export function NavLinks({ isAdmin, mobile }: { isAdmin: boolean, mobile?: boole
                 {isAdmin && (
                     <Link
                         href="/dashboard/admin/users"
+                        onClick={onLinkClick}
                         className={`block pl-3 pr-4 py-2 border-l-4 text-base font-medium ${isUsersActive
                             ? 'border-blue-500 text-blue-700 bg-blue-50'
                             : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
