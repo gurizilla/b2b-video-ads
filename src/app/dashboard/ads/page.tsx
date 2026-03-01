@@ -6,7 +6,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
     title: 'Campaigns | List',
 }
-import { Video, PlusSquare, Calendar, PlaySquare, Edit, Trash2 } from 'lucide-react'
+import { Video, PlusSquare, Calendar, PlaySquare, Edit, Trash2, ExternalLink } from 'lucide-react'
 
 type CampaignWithCompany = Database['public']['Tables']['campaigns']['Row'] & {
     companies?: { name: string } | null
@@ -186,6 +186,9 @@ export default async function AdsListPage() {
                                         </td>
                                         <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                                             <div className="flex justify-end items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Link href={`/play/${campaign.id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center p-2 text-green-600 hover:text-green-700 transition-colors rounded-md hover:bg-green-50 bg-white ring-1 ring-inset ring-green-300" title="Play Campaign Feed">
+                                                    <ExternalLink className="h-4 w-4" />
+                                                </Link>
                                                 <Link href={`/dashboard/ads/${campaign.id}`} className="inline-flex items-center justify-center p-2 text-gray-500 hover:text-blue-700 transition-colors rounded-md hover:bg-blue-50 bg-white ring-1 ring-inset ring-gray-300" title="Manage Videos">
                                                     <PlusSquare className="h-4 w-4" />
                                                 </Link>
