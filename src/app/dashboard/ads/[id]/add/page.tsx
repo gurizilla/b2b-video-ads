@@ -1,25 +1,60 @@
-'use client'
-
 import Link from 'next/link'
-import { createVideoAd } from './actions'
-import { SubmitButton } from '@/components/submit-button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { ArrowLeft, Video, Link2 } from 'lucide-react'
-import { use } from 'react'
+import { ArrowLeft } from 'lucide-react'
+import { AddVideoForm } from './add-video-form'
+import { createClient } from '@/utils/supabase/server'
+import { redirect } from 'next/navigation'
 
-export default function AddVideoPage({
+export default async function AddVideoPage({
     params,
     searchParams,
 }: {
     params: Promise<{ id: string }>
     searchParams: Promise<{ error?: string }>
 }) {
-    const { id } = use(params)
-    const { error } = use(searchParams)
+    const { id } = await params
+    const { error } = await searchParams
 
-    // Bind the campaign ID to the server action
-    const addVideoWithCampaignId = createVideoAd.bind(null, id)
+    const supabase = await createClient()
+
+    // Ensure user is authed and get profile
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return redirect('/login')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single()
+
+    // Fetch unique library videos for this company
+    // We get all videos for the company, then filter in JS to keep unique titles/URLs
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let libraryVideos: any[] = []
+
+    if (profile?.company_id) {
+        const { data: companyAds } = await supabase
+            .from('video_ads')
+            .select('title, video_url, campaign_id')
+            .eq('company_id', profile.company_id)
+            .order('created_at', { ascending: false })
+
+        if (companyAds) {
+            // Find which URLs are already in the current campaign
+            const urlsInCurrentCampaign = new Set(
+                companyAds.filter(ad => ad.campaign_id === id).map(ad => ad.video_url)
+            );
+
+            // Deduplicate by URL and filter out videos already in this campaign
+            const seenUrls = new Set()
+            libraryVideos = companyAds.filter(ad => {
+                if (urlsInCurrentCampaign.has(ad.video_url)) return false;
+
+                const isDuplicate = seenUrls.has(ad.video_url)
+                seenUrls.add(ad.video_url)
+                return !isDuplicate
+            })
+        }
+    }
 
     return (
         <div className="max-w-2xl mx-auto">
@@ -33,7 +68,7 @@ export default function AddVideoPage({
                 </Link>
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Add Video Clip</h1>
-                    <p className="text-sm text-gray-500">Add a new YouTube video link to this campaign.</p>
+                    <p className="text-sm text-gray-500">Add a new YouTube video link to this campaign or choose from your library.</p>
                 </div>
             </div>
 
@@ -50,55 +85,7 @@ export default function AddVideoPage({
                 </div>
             )}
 
-            <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
-                <form action={addVideoWithCampaignId} className="px-4 py-6 sm:p-8">
-                    <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-
-                        <div className="sm:col-span-6">
-                            <Label htmlFor="title" className="flex items-center gap-2 mb-2">
-                                <Video className="w-4 h-4 text-gray-500" />
-                                Video Title *
-                            </Label>
-                            <div className="mt-2">
-                                <Input
-                                    type="text"
-                                    name="title"
-                                    id="title"
-                                    placeholder="e.g. Q3 Opening Hook"
-                                    required
-                                />
-                            </div>
-                        </div>
-
-                        <div className="sm:col-span-6">
-                            <Label htmlFor="video_url" className="flex items-center gap-2 mb-2">
-                                <Link2 className="w-4 h-4 text-gray-500" />
-                                YouTube URL *
-                            </Label>
-                            <div className="mt-2">
-                                <Input
-                                    type="url"
-                                    name="video_url"
-                                    id="video_url"
-                                    placeholder="https://www.youtube.com/watch?v=..."
-                                    required
-                                />
-                                <p className="mt-2 text-sm text-gray-500">Must be a valid YouTube watch URL.</p>
-                            </div>
-                        </div>
-
-                    </div>
-
-                    <div className="mt-8 flex items-center justify-end gap-x-6 border-t border-gray-900/10 pt-8">
-                        <Link href={`/dashboard/ads/${id}`} className="text-sm font-semibold leading-6 text-gray-900 hover:text-gray-700">
-                            Cancel
-                        </Link>
-                        <SubmitButton pendingText="Adding...">
-                            Add Video
-                        </SubmitButton>
-                    </div>
-                </form>
-            </div>
+            <AddVideoForm campaignId={id} libraryVideos={libraryVideos} />
         </div>
     )
 }
