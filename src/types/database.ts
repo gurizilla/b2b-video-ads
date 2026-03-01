@@ -12,6 +12,7 @@ export type VideoAdStatus = 'draft' | 'active' | 'paused' | 'archived'
 export type VideoAd = {
     id: string
     user_id: string
+    company_id: string | null
     title: string
     video_url: string
     description: string | null

@@ -71,9 +71,14 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
         activeIndexRef.current = currentVisualIndex;
     }, [currentVisualIndex]);
 
-    // Manage play time tracking (polls every 60s)
+    // Ref to accumulate viewing time per video ID (in milliseconds)
+    const viewTimeAccumulatorRef = useRef<{ [adId: string]: number }>({});
+
+    // Manage play time tracking (polls every 5s for better accuracy)
     useEffect(() => {
-        // Function to record a minute of watch time
+        const POLLING_INTERVAL_MS = 5000; // 5 seconds
+
+        // Function to record watch time
         const recordWatchTime = async () => {
             const activeIdx = activeIndexRef.current;
             const adId = ads[activeIdx]?.id;
@@ -86,11 +91,25 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
                 if (player && typeof player.getPlayerState === 'function') {
                     const state = player.getPlayerState();
                     if (state === 1) { // 1 = playing
-                        // Dynamic import supabase client to avoid SSR issues if this runs in a strange context
-                        const { createClient } = await import('@/utils/supabase/client');
-                        const supabase = createClient();
-                        await supabase.rpc('increment_play_time', { ad_id: adId });
-                        console.log(`Recorded 1 min for ${adId}`);
+                        // Initialize accumulator if needed
+                        if (!viewTimeAccumulatorRef.current[adId]) {
+                            viewTimeAccumulatorRef.current[adId] = 0;
+                        }
+
+                        // Add polling interval to accumulator
+                        viewTimeAccumulatorRef.current[adId] += POLLING_INTERVAL_MS;
+
+                        // Check if we have accumulated at least 60 seconds (1 minute)
+                        if (viewTimeAccumulatorRef.current[adId] >= 60000) {
+                            // Subtract exactly 60 seconds from the accumulator (keeps remainder for precision)
+                            viewTimeAccumulatorRef.current[adId] -= 60000;
+
+                            // Send the +1 minute update to the database
+                            const { createClient } = await import('@/utils/supabase/client');
+                            const supabase = createClient();
+                            await supabase.rpc('increment_play_time', { ad_id: adId });
+                            console.log(`Recorded 1 min for ${adId}`);
+                        }
                     }
                 }
             } catch (error) {
@@ -98,7 +117,7 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
             }
         };
 
-        const intervalId = setInterval(recordWatchTime, 60000); // 60 seconds
+        const intervalId = setInterval(recordWatchTime, POLLING_INTERVAL_MS);
 
         return () => clearInterval(intervalId);
     }, [ads]);

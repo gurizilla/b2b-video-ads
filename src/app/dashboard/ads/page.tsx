@@ -3,13 +3,17 @@ import { Database } from '@/types/database'
 import Link from 'next/link'
 import { MoreVertical, ExternalLink, Calendar, PlaySquare, Edit, Trash2 } from 'lucide-react'
 
+type VideoAdWithCompany = Database['public']['Tables']['video_ads']['Row'] & {
+    companies?: { name: string } | null
+}
+
 // Fetch ads from Supabase
-async function getVideoAds() {
+async function getVideoAds(): Promise<{ ads: VideoAdWithCompany[], isAdmin: boolean }> {
     const supabase = await createClient()
 
     // Get user and profile for company filtering
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return []
+    if (!user) return { ads: [], isAdmin: false }
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -19,7 +23,7 @@ async function getVideoAds() {
 
     let query = supabase
         .from('video_ads')
-        .select('*')
+        .select('*, companies(name)')
         .order('created_at', { ascending: false })
 
     // Regular users only see their own company's ads on the dashboard
@@ -28,7 +32,7 @@ async function getVideoAds() {
         if (profile?.company_id) {
             query = query.eq('company_id', profile.company_id)
         } else {
-            return [] // User not assigned to a company yet
+            return { ads: [], isAdmin: false } // User not assigned to a company yet
         }
     }
 
@@ -36,14 +40,14 @@ async function getVideoAds() {
 
     if (error) {
         console.error('Error fetching ads:', JSON.stringify(error, null, 2))
-        return []
+        return { ads: [], isAdmin: false }
     }
 
-    return data as Database['public']['Tables']['video_ads']['Row'][]
+    return { ads: data as VideoAdWithCompany[], isAdmin: !!profile?.is_admin }
 }
 
 export default async function AdsListPage() {
-    const ads = await getVideoAds()
+    const { ads, isAdmin } = await getVideoAds()
 
     // Format date helper
     const formatDate = (dateString: string) => {
@@ -101,6 +105,11 @@ export default async function AdsListPage() {
                                             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                                 Status
                                             </th>
+                                            {isAdmin && (
+                                                <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
+                                                    Company
+                                                </th>
+                                            )}
                                             <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">
                                                 Play Time
                                             </th>
@@ -132,10 +141,17 @@ export default async function AdsListPage() {
                                                     </div>
                                                 </td>
                                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                                                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${statusColors[ad.status]}`}>
+                                                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${statusColors[ad.status as keyof typeof statusColors] || statusColors.draft}`}>
                                                         {ad.status.charAt(0).toUpperCase() + ad.status.slice(1)}
                                                     </span>
                                                 </td>
+                                                {isAdmin && (
+                                                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                                        <span className="inline-flex items-center rounded-md bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 ring-1 ring-inset ring-purple-700/10">
+                                                            {ad.companies?.name || 'Unassigned'}
+                                                        </span>
+                                                    </td>
+                                                )}
                                                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                     <div className="font-medium text-gray-900">
                                                         {ad.play_time_minutes || 0} min
