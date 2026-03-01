@@ -250,7 +250,7 @@ export default async function DashboardRoot() {
                         <h2 className="text-lg font-medium text-gray-900 mb-4">
                             All System Campaigns
                         </h2>
-                        <div className="bg-white shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg overflow-hidden">
+                        <div className="bg-white shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg overflow-hidden overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-300">
                                 <thead className="bg-gray-50">
                                     <tr>

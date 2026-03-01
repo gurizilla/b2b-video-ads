@@ -52,7 +52,7 @@ export default async function CompaniesPage() {
                 </form>
             </div>
 
-            <div className="mt-8 bg-white shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg overflow-hidden">
+            <div className="mt-8 bg-white shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg overflow-hidden overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-300">
                     <thead className="bg-gray-50">
                         <tr>

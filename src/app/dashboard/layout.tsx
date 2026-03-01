@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Video, LogOut } from 'lucide-react'
 import { NavLinks } from './nav-links'
+import { MobileNav } from './mobile-nav'
 
 export default async function DashboardLayout({
     children,
@@ -65,12 +66,15 @@ export default async function DashboardLayout({
                                 </div>
                             </div>
                         </div>
+                        <div className="flex items-center sm:hidden">
+                            <MobileNav email={user.email || 'User'} isAdmin={!!profile?.is_admin} />
+                        </div>
                     </div>
                 </div>
             </nav>
 
             {/* Main Content */}
-            <main className="flex-1 max-w-7xl w-full mx-auto py-6 sm:px-6 lg:px-8">
+            <main className="flex-1 max-w-7xl w-full mx-auto py-6 px-4 sm:px-6 lg:px-8 min-w-0">
                 {children}
             </main>
         </div>

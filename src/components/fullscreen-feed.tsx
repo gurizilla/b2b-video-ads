@@ -216,9 +216,9 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
                         </div>
 
                         {/* Minimal UI Overlay Layer */}
-                        <div className="absolute bottom-8 left-8 z-10 text-white pb-safe pt-4 pr-10 hover:opacity-100 opacity-80 transition-opacity max-w-lg">
+                        <div className="absolute bottom-16 sm:bottom-8 left-4 sm:left-8 z-10 text-white pb-safe pt-4 pr-4 sm:pr-10 hover:opacity-100 opacity-80 transition-opacity max-w-sm sm:max-w-lg">
                             <div className="animate-in fade-in slide-in-from-bottom-5 duration-700">
-                                <h2 className="text-2xl font-medium mb-2 drop-shadow-md">
+                                <h2 className="text-xl sm:text-2xl font-medium mb-2 drop-shadow-md">
                                     {ad.title}
                                 </h2>
 
@@ -226,7 +226,7 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
                                     <div className="h-6 w-6 bg-blue-600 rounded-full flex items-center justify-center font-bold shadow text-xs">
                                         {ad.profiles?.first_name ? ad.profiles.first_name[0].toUpperCase() : 'B'}
                                     </div>
-                                    <p className="text-sm text-gray-200 drop-shadow-md font-medium">
+                                    <p className="text-xs sm:text-sm text-gray-200 drop-shadow-md font-medium">
                                         Sponsored by {ad.profiles?.first_name ? `${ad.profiles.first_name} ${ad.profiles.last_name || ''}` : ad.profiles?.email || 'Partner'}
                                     </p>
                                 </div>
