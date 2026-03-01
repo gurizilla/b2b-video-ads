@@ -1,4 +1,4 @@
-import { deleteVideoAd } from './actions'
+import { deleteCampaign } from './actions'
 
 export default async function DeleteAdPage(props: { params: Promise<{ id: string }>, searchParams: Promise<{ error?: string }> }) {
     const params = await props.params;
@@ -26,7 +26,7 @@ export default async function DeleteAdPage(props: { params: Promise<{ id: string
             )}
 
 
-            <form action={deleteVideoAd}>
+            <form action={deleteCampaign}>
                 <input type="hidden" name="id" value={params.id} />
                 <div className="flex gap-4 justify-center">
                     <a href="/dashboard/ads" className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">

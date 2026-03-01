@@ -1,7 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Video, LogOut, PlusCircle } from 'lucide-react'
+import { Video, LogOut } from 'lucide-react'
 import { NavLinks } from './nav-links'
 
 export default async function DashboardLayout({
@@ -48,10 +48,7 @@ export default async function DashboardLayout({
                             <NavLinks isAdmin={!!profile?.is_admin} />
                         </div>
                         <div className="hidden sm:ml-6 sm:flex sm:items-center gap-4">
-                            <Link href="/dashboard/ads/create" className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-blue-600 text-white hover:bg-blue-700 h-9 px-4 py-2 gap-2">
-                                <PlusCircle className="h-4 w-4" />
-                                New Ad
-                            </Link>
+
 
                             <div className="relative ml-3">
                                 <div className="flex items-center gap-3">

@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createVideoAd } from './actions'
+import { createCampaign } from './actions'
 import { SubmitButton } from '@/components/submit-button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ArrowLeft, Video, Link2, AlignLeft } from 'lucide-react'
+import { ArrowLeft, Video, AlignLeft } from 'lucide-react'
 
 export default function CreateAdPage() {
     // Action will redirect on completion or error using search params
@@ -27,7 +27,7 @@ export default function CreateAdPage() {
             </div>
 
             <div className="bg-white shadow-sm ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
-                <form action={createVideoAd} className="px-4 py-6 sm:p-8">
+                <form action={createCampaign} className="px-4 py-6 sm:p-8">
                     <div className="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
                         <div className="sm:col-span-5">
@@ -47,22 +47,7 @@ export default function CreateAdPage() {
                             </div>
                         </div>
 
-                        <div className="sm:col-span-6">
-                            <Label htmlFor="video_url" className="flex items-center gap-2 mb-2">
-                                <Link2 className="w-4 h-4 text-gray-500" />
-                                Video URL *
-                            </Label>
-                            <div className="mt-2">
-                                <Input
-                                    type="url"
-                                    name="video_url"
-                                    id="video_url"
-                                    placeholder="https://vimeo.com/..."
-                                    required
-                                />
-                                <p className="mt-2 text-sm text-gray-500">Must be a valid URL pointing to your hosted video.</p>
-                            </div>
-                        </div>
+
 
                         <div className="sm:col-span-6">
                             <Label htmlFor="description" className="flex items-center gap-2 mb-2">

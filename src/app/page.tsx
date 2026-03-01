@@ -5,8 +5,9 @@ async function getActiveAds() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('video_ads')
-    .select(`*, profiles(first_name, last_name, email)`)
+    .select(`*, profiles(first_name, last_name, email), campaigns!inner(status)`)
     .eq('status', 'active')
+    .eq('campaigns.status', 'active')
     .order('created_at', { ascending: false })
 
   if (error) {

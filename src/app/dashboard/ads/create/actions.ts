@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
-export async function createVideoAd(formData: FormData) {
+export async function createCampaign(formData: FormData) {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -13,12 +13,11 @@ export async function createVideoAd(formData: FormData) {
     }
 
     const title = formData.get('title') as string
-    const video_url = formData.get('video_url') as string
     const description = formData.get('description') as string
     const status = formData.get('status') as string
 
-    if (!title || !video_url) {
-        redirect('/dashboard/ads/create?error=Title and Video URL are required')
+    if (!title) {
+        redirect('/dashboard/ads/create?error=Title is required')
     }
 
     const { data: profile } = await supabase
@@ -27,21 +26,22 @@ export async function createVideoAd(formData: FormData) {
         .eq('id', user.id)
         .single()
 
-    const { error } = await supabase
-        .from('video_ads')
+    const { data: insertedCampaign, error } = await supabase
+        .from('campaigns')
         .insert({
             user_id: user.id,
             company_id: profile?.company_id || null,
             title,
-            video_url,
             description,
             status: status as 'draft' | 'active' | 'paused' | 'archived',
         })
+        .select('id')
+        .single()
 
     if (error) {
-        console.error('Error creating video ad:', error)
+        console.error('Error creating campaign:', error)
         redirect('/dashboard/ads/create?error=Could not create campaign')
     }
 
-    redirect('/dashboard/ads')
+    redirect(`/dashboard/ads/${insertedCampaign.id}`)
 }

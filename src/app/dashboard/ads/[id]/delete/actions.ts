@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 
-export async function deleteVideoAd(formData: FormData) {
+export async function deleteCampaign(formData: FormData) {
     const supabase = await createClient()
 
     const { data: { user } } = await supabase.auth.getUser()
@@ -14,17 +14,17 @@ export async function deleteVideoAd(formData: FormData) {
     const id = formData.get('id') as string
 
     if (!id) {
-        redirect('/dashboard/ads?error=Ad ID is required')
+        redirect('/dashboard/ads?error=Campaign ID is required')
     }
 
     const { error } = await supabase
-        .from('video_ads')
+        .from('campaigns')
         .delete()
         .eq('id', id)
         .eq('user_id', user.id) // Extra safety check
 
     if (error) {
-        console.error('Error deleting video ad:', error)
+        console.error('Error deleting campaign:', error)
         redirect('/dashboard/ads?error=Could not delete campaign')
     }
 

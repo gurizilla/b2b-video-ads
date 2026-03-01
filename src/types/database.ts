@@ -7,12 +7,25 @@ export type UserProfile = {
     created_at: string
 }
 
+export type CampaignStatus = 'draft' | 'active' | 'paused' | 'archived'
+
+export type Campaign = {
+    id: string
+    user_id: string
+    company_id: string | null
+    title: string
+    description: string | null
+    status: CampaignStatus
+    created_at: string
+    updated_at: string
+}
+
 export type VideoAdStatus = 'draft' | 'active' | 'paused' | 'archived'
 
 export type VideoAd = {
     id: string
     user_id: string
-    company_id: string | null
+    campaign_id: string
     title: string
     video_url: string
     description: string | null
@@ -29,6 +42,11 @@ export type Database = {
                 Row: UserProfile
                 Insert: Omit<UserProfile, 'created_at'>
                 Update: Partial<Omit<UserProfile, 'id' | 'created_at'>>
+            }
+            campaigns: {
+                Row: Campaign
+                Insert: Omit<Campaign, 'id' | 'created_at' | 'updated_at'>
+                Update: Partial<Omit<Campaign, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
             }
             video_ads: {
                 Row: VideoAd
