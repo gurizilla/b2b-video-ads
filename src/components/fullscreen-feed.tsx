@@ -8,8 +8,17 @@ import YouTube from 'react-youtube'
 const getYouTubeId = (url: string) => {
     try {
         const urlObj = new URL(url)
-        if (urlObj.hostname === 'youtu.be') return urlObj.pathname.slice(1)
-        if (urlObj.hostname.includes('youtube.com')) return urlObj.searchParams.get('v') || ''
+        if (urlObj.hostname === 'youtu.be') {
+            return urlObj.pathname.slice(1)
+        }
+        if (urlObj.hostname.includes('youtube.com')) {
+            // Check for YouTube Shorts
+            if (urlObj.pathname.startsWith('/shorts/')) {
+                return urlObj.pathname.split('/')[2] || ''
+            }
+            // Standard watch URLs
+            return urlObj.searchParams.get('v') || ''
+        }
     } catch { return '' }
     return ''
 }
@@ -126,6 +135,20 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
         if (!containerRef.current) return;
         const nextIndex = currentVisualIndex + 1;
 
+        // If this is the only ad, just replay it directly
+        if (ads.length === 1) {
+            const player = playersRef.current[0];
+            if (player && typeof player.seekTo === 'function') {
+                player.seekTo(0);
+                setTimeout(() => {
+                    if (typeof player.playVideo === 'function') {
+                        player.playVideo();
+                    }
+                }, 100);
+            }
+            return;
+        }
+
         // Wait for a small amount of time to make the transition smoother
         setTimeout(() => {
             const container = containerRef.current;
@@ -136,6 +159,7 @@ export function FullScreenFeed({ ads }: { ads: any[] }) {
                 container.scrollBy({ top: window.innerHeight, behavior: 'smooth' });
             } else {
                 // Loop back to the first video
+                // Using exact precise negative scroll to force reset regardless of window changes
                 container.scrollTo({ top: 0, behavior: 'smooth' });
             }
         }, 500);
