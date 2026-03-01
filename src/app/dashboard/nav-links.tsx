@@ -32,7 +32,7 @@ export function NavLinks({ isAdmin, mobile, onLinkClick }: { isAdmin: boolean, m
                         : 'border-transparent text-gray-600 hover:text-gray-800 hover:bg-gray-50 hover:border-gray-300'
                         }`}
                 >
-                    My Campaigns
+                    {isAdmin ? 'All Campaigns' : 'My Campaigns'}
                 </Link>
                 {isAdmin && (
                     <Link
@@ -68,7 +68,7 @@ export function NavLinks({ isAdmin, mobile, onLinkClick }: { isAdmin: boolean, m
                     : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
                     }`}
             >
-                My Campaigns
+                {isAdmin ? 'All Campaigns' : 'My Campaigns'}
             </Link>
             {isAdmin && (
                 <Link

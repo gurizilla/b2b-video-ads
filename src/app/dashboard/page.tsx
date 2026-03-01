@@ -31,15 +31,28 @@ export default async function DashboardRoot() {
     let activeCampaignsCount = 0
     let totalPlayTime = 0
 
-    if (profile?.company_id) {
-        // Fetch ad data for this company
-        const { data: ads } = await supabase
-            .from('video_ads')
-            .select('status, play_time_minutes')
-            .eq('company_id', profile.company_id)
+    if (profile?.company_id || profile?.is_admin) {
+        // Fetch campaigns for active count
+        let campaignsQuery = supabase.from('campaigns').select('status')
+        if (!profile?.is_admin && profile?.company_id) {
+            campaignsQuery = campaignsQuery.eq('company_id', profile.company_id)
+        }
+
+        const { data: campaigns } = await campaignsQuery
+
+        if (campaigns) {
+            activeCampaignsCount = campaigns.filter((c) => c.status === 'active').length
+        }
+
+        // Fetch ad data for total play time
+        let adsQuery = supabase.from('video_ads').select('play_time_minutes')
+        if (!profile?.is_admin && profile?.company_id) {
+            adsQuery = adsQuery.eq('company_id', profile.company_id)
+        }
+
+        const { data: ads } = await adsQuery
 
         if (ads) {
-            activeCampaignsCount = ads.filter((ad) => ad.status === 'active').length
             totalPlayTime = ads.reduce(
                 (sum, ad) => sum + (ad.play_time_minutes || 0),
                 0
@@ -50,6 +63,7 @@ export default async function DashboardRoot() {
     // --- ADMIN DATA FETCHING ---
     let totalUsers = 0
     let totalCampaigns = 0
+    let systemActiveCampaigns = 0
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let allAds: any[] | null = null
 
@@ -67,6 +81,12 @@ export default async function DashboardRoot() {
             .from('campaigns')
             .select('*', { count: 'exact', head: true })
         totalCampaigns = campaignsCount || 0
+
+        const { count: activeCount } = await adminClient
+            .from('campaigns')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'active')
+        systemActiveCampaigns = activeCount || 0
 
         const { data: campaignsData, error } = await adminClient
             .from('campaigns')
@@ -108,26 +128,28 @@ export default async function DashboardRoot() {
                         Dashboard Overview
                     </h1>
                     <p className="mt-2 text-sm text-gray-700">
-                        At-a-glance statistics and metrics for your company's advertising
-                        campaigns.
+                        At-a-glance statistics and metrics {profile?.is_admin ? "across the entire system." : "for your company's advertising campaigns."}
                     </p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mt-6">
-                <div className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5">
-                    <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                <Link
+                    href="/dashboard/ads"
+                    className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5 hover:shadow-md transition-shadow group cursor-pointer"
+                >
+                    <div className="p-3.5 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
                         <PlaySquare className="h-6 w-6" strokeWidth={1.5} />
                     </div>
                     <div className="flex flex-col">
-                        <p className="text-sm font-medium text-gray-500 mb-1">
+                        <p className="text-sm font-medium text-gray-500 mb-1 group-hover:text-blue-600 transition-colors">
                             Active Campaigns
                         </p>
                         <p className="text-2xl font-bold text-gray-900 leading-none">
                             {activeCampaignsCount}
                         </p>
                     </div>
-                </div>
+                </Link>
 
                 <div className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5">
                     <div className="p-3.5 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center">
@@ -159,7 +181,7 @@ export default async function DashboardRoot() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-6">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-6">
                         <Link
                             href="/dashboard/admin/users"
                             className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5 hover:shadow-md transition-shadow group cursor-pointer"
@@ -173,22 +195,6 @@ export default async function DashboardRoot() {
                                 </p>
                                 <p className="text-2xl font-bold text-gray-900 leading-none">
                                     {totalUsers}
-                                </p>
-                            </div>
-                        </Link>
-                        <Link
-                            href="/dashboard/ads"
-                            className="bg-white shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05),_0_0_1px_rgba(0,0,0,0.2)] rounded-xl border border-gray-100 p-5 flex items-center gap-5 hover:shadow-md transition-shadow group cursor-pointer"
-                        >
-                            <div className="p-3.5 bg-green-50 text-green-600 rounded-xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                                <PlaySquare className="h-6 w-6" strokeWidth={1.5} />
-                            </div>
-                            <div className="flex flex-col">
-                                <p className="text-sm font-medium text-gray-500 mb-1 group-hover:text-green-600 transition-colors">
-                                    Total Campaigns
-                                </p>
-                                <p className="text-2xl font-bold text-gray-900 leading-none">
-                                    {totalCampaigns}
                                 </p>
                             </div>
                         </Link>
